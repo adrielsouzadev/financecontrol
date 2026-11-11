@@ -1,3 +1,5 @@
+import { PageHeader } from "@/components/layout/page-header";
+
 import {
   ArrowDownCircle,
   ArrowUpCircle,
@@ -9,15 +11,10 @@ export default function Home() {
     <main className="min-h-screen p-6 md:p-10">
       <div className="mx-auto max-w-7xl space-y-8">
         {/* Cabeçalho */}
-        <header>
-          <h1 className="text-3xl font-bold tracking-tight">
-            FinanceControl
-          </h1>
-
-          <p className="mt-2 text-muted">
-            Controle suas finanças de forma simples e organizada.
-          </p>
-        </header>
+        <PageHeader
+          title="Dashboard"
+          description="Acompanhe sua situação financeira e seus resultados."
+        />
 
         {/* Resumo financeiro */}
         <section className="grid gap-4 md:grid-cols-3">
