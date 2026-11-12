@@ -1,6 +1,9 @@
+
 import { prisma } from "@/lib/prisma";
 import { connection } from "next/server";
 import { SummaryCard } from "@/components/dashboard/summary-card";
+import { MonthlyComparisonChart } from "@/components/dashboard/charts/monthly-comparison-chart";
+import { CategoryExpensesChart } from "@/components/dashboard/charts/category-expenses-chart";
 
 import {
   ArrowDownCircle,
@@ -34,8 +37,14 @@ export async function DashboardSummary({
 
   const startOfMonth = new Date(year, month - 1, 1);
   const startOfNextMonth = new Date(year, month, 1);
+  const startOfSixMonths = new Date(year, month - 5, 1);
 
-  const [totals, monthlyTotals] = await Promise.all([
+  const [
+    totals,
+    monthlyTotals,
+    sixMonthsTransactions,
+    categoryExpenses,
+  ] = await Promise.all([
     prisma.transaction.groupBy({
       by: ["type"],
       _sum: {
@@ -46,6 +55,37 @@ export async function DashboardSummary({
     prisma.transaction.groupBy({
       by: ["type"],
       where: {
+        date: {
+          gte: startOfMonth,
+          lt: startOfNextMonth,
+        },
+      },
+      _sum: {
+        amount: true,
+      },
+    }),
+
+    prisma.transaction.findMany({
+      where: {
+        date: {
+          gte: startOfSixMonths,
+          lt: startOfNextMonth,
+        },
+      },
+      select: {
+        date: true,
+        type: true,
+        amount: true,
+      },
+      orderBy: {
+        date: "asc",
+      },
+    }),
+
+    prisma.transaction.groupBy({
+      by: ["categoryId"],
+      where: {
+        type: "EXPENSE",
         date: {
           gte: startOfMonth,
           lt: startOfNextMonth,
@@ -75,30 +115,87 @@ export async function DashboardSummary({
 
   const balance = totalIncome - totalExpense;
 
+  const monthlyChartData = Array.from(
+    { length: 6 },
+    (_, index) => {
+      const date = new Date(year, month - 5 + index, 1);
+
+      const monthTransactions = sixMonthsTransactions.filter(
+        (transaction) =>
+          transaction.date.getUTCMonth() === date.getMonth() &&
+          transaction.date.getUTCFullYear() === date.getFullYear()
+      );
+
+      const income = monthTransactions
+        .filter((transaction) => transaction.type === "INCOME")
+        .reduce(
+          (total, transaction) => total + Number(transaction.amount),
+          0
+        );
+
+      const expense = monthTransactions
+        .filter((transaction) => transaction.type === "EXPENSE")
+        .reduce(
+          (total, transaction) => total + Number(transaction.amount),
+          0
+        );
+
+      return {
+        month: new Intl.DateTimeFormat("pt-BR", {
+          month: "short",
+        })
+          .format(date)
+          .replace(".", ""),
+        income,
+        expense,
+      };
+    }
+  );
+
+  const categories = await prisma.category.findMany({
+    select: {
+      id: true,
+      name: true,
+    },
+  });
+
+  const categoryChartData = categoryExpenses.map((item) => ({
+    category:
+      categories.find((category) => category.id === item.categoryId)
+        ?.name ?? "Outras despesas",
+    amount: Number(item._sum.amount ?? 0),
+  }));
+
   return (
-    <section className="grid gap-4 md:grid-cols-3">
-      <SummaryCard
-        title="Saldo total"
-        value={balance}
-        description="Seu saldo atual"
-        icon={Wallet}
-      />
+    <div className="space-y-6">
+      <section className="grid gap-4 md:grid-cols-3">
+        <SummaryCard
+          title="Saldo total"
+          value={balance}
+          description="Seu saldo atual"
+          icon={Wallet}
+        />
 
-      <SummaryCard
-        title="Receitas do mês"
-        value={monthlyIncome}
-        description="Total recebido neste mês"
-        icon={ArrowUpCircle}
-        variant="positive"
-      />
+        <SummaryCard
+          title="Receitas do mês"
+          value={monthlyIncome}
+          description="Total recebido neste mês"
+          icon={ArrowUpCircle}
+          variant="positive"
+        />
 
-      <SummaryCard
-        title="Despesas do mês"
-        value={monthlyExpense}
-        description="Total gasto neste mês"
-        icon={ArrowDownCircle}
-        variant="negative"
-      />
-    </section>
+        <SummaryCard
+          title="Despesas do mês"
+          value={monthlyExpense}
+          description="Total gasto neste mês"
+          icon={ArrowDownCircle}
+          variant="negative"
+        />
+      </section>
+
+      <MonthlyComparisonChart data={monthlyChartData} />
+
+      <CategoryExpensesChart data={categoryChartData} />
+    </div>
   );
 }
