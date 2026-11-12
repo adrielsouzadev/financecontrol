@@ -1,3 +1,7 @@
+"use client";
+
+import { useState } from "react";
+import { deleteTransaction } from "@/app/actions/transactions";
 import type { TransactionType } from "@/generated/prisma/client";
 
 type TransactionItem = {
@@ -18,19 +22,37 @@ type TransactionListProps = {
 export function TransactionList({
   transactions,
 }: TransactionListProps) {
-  if (transactions.length === 0) {
-    return (
-      <section className="rounded-xl border border-border bg-white p-6 shadow-sm">
-        <h2 className="text-lg font-semibold">
-          Histórico de transações
-        </h2>
+  const [transactionToDelete, setTransactionToDelete] = useState<string | null>(null);
+  const [message, setMessage] = useState("");
 
-        <p className="mt-4 text-sm text-muted">
-          Nenhuma transação cadastrada ainda.
-        </p>
-      </section>
-    );
+  async function handleDelete() {
+    if (!transactionToDelete) return;
+
+    const result = await deleteTransaction(transactionToDelete);
+
+    setMessage(result.message);
+    setTransactionToDelete(null);
   }
+
+  if (transactions.length === 0) {
+		return (
+			<section className="rounded-xl border border-border bg-white p-6 shadow-sm">
+				<h2 className="text-lg font-semibold">
+					Histórico de transações
+				</h2>
+
+				{message && (
+					<p className="mt-4 text-sm text-muted" role="status">
+						{message}
+					</p>
+				)}
+
+				<p className="mt-4 text-sm text-muted">
+					Nenhuma transação cadastrada ainda.
+				</p>
+			</section>
+		);
+	}
 
   return (
     <section className="rounded-xl border border-border bg-white p-6 shadow-sm">
@@ -44,6 +66,12 @@ export function TransactionList({
         </p>
       </div>
 
+      {message && (
+        <p className="mb-4 text-sm text-muted" role="status">
+          {message}
+        </p>
+      )}
+
       <div className="overflow-x-auto">
         <table className="w-full text-left text-sm">
           <thead>
@@ -53,6 +81,7 @@ export function TransactionList({
               <th className="px-3 py-3 font-medium">Data</th>
               <th className="px-3 py-3 font-medium">Tipo</th>
               <th className="px-3 py-3 text-right font-medium">Valor</th>
+              <th className="px-3 py-3 text-center font-medium">Ações</th>
             </tr>
           </thead>
 
@@ -103,11 +132,61 @@ export function TransactionList({
                     currency: "BRL",
                   })}
                 </td>
+
+                <td className="px-3 py-4 text-center">
+                  <button
+                    type="button"
+                    onClick={() => setTransactionToDelete(transaction.id)}
+                    className="rounded-lg px-3 py-2 text-xs font-medium text-red-600 transition-colors hover:bg-red-50"
+                  >
+                    Excluir
+                  </button>
+                </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+			{transactionToDelete && (
+			<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+				<div
+					role="dialog"
+					aria-modal="true"
+					aria-labelledby="delete-dialog-title"
+					className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl"
+				>
+					<h3
+						id="delete-dialog-title"
+						className="text-lg font-semibold text-gray-900"
+					>
+						Excluir transação?
+					</h3>
+
+					<p className="mt-2 text-sm text-gray-600">
+						Tem certeza que deseja excluir esta transação? Essa ação não poderá
+						ser desfeita.
+					</p>
+
+					<div className="mt-6 flex justify-end gap-3">
+						<button
+							type="button"
+							onClick={() => setTransactionToDelete(null)}
+							className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100"
+						>
+							Cancelar
+						</button>
+
+						<button
+							type="button"
+							onClick={handleDelete}
+							className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700"
+						>
+							Excluir
+						</button>
+					</div>
+				</div>
+			</div>
+		)}
     </section>
   );
 }

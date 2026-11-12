@@ -75,3 +75,45 @@ export async function createTransaction(
     };
   }
 }
+
+export async function deleteTransaction(
+  id: string
+): Promise<TransactionFormState> {
+  if (!id || !id.trim()) {
+    return {
+      status: "error",
+      message: "Transação inválida.",
+    };
+  }
+
+  try {
+    const transaction = await prisma.transaction.findUnique({
+      where: { id },
+      select: { id: true },
+    });
+
+    if (!transaction) {
+      return {
+        status: "error",
+        message: "Transação não encontrada.",
+      };
+    }
+
+    await prisma.transaction.delete({
+      where: { id },
+    });
+
+    revalidatePath("/");
+    revalidatePath("/transactions");
+
+    return {
+      status: "success",
+      message: "Transação excluída com sucesso!",
+    };
+  } catch {
+    return {
+      status: "error",
+      message: "Não foi possível excluir a transação.",
+    };
+  }
+}
