@@ -27,17 +27,26 @@ export async function DashboardSummary({
 
   const currentDate = new Date();
 
-  const month = Number(
-    params.month ?? currentDate.getMonth() + 1
-  );
+  const parsedMonth = Number(params.month);
+  const parsedYear = Number(params.year);
 
-  const year = Number(
-    params.year ?? currentDate.getFullYear()
-  );
+  const month =
+    Number.isInteger(parsedMonth) &&
+    parsedMonth >= 1 &&
+    parsedMonth <= 12
+      ? parsedMonth
+      : currentDate.getMonth() + 1;
 
-  const startOfMonth = new Date(year, month - 1, 1);
-  const startOfNextMonth = new Date(year, month, 1);
-  const startOfSixMonths = new Date(year, month - 5, 1);
+  const year =
+    Number.isInteger(parsedYear) &&
+    parsedYear >= 1900 &&
+    parsedYear <= 2100
+      ? parsedYear
+      : currentDate.getFullYear();
+
+  const startOfMonth = new Date(Date.UTC(year, month - 1, 1));
+  const startOfNextMonth = new Date(Date.UTC(year, month, 1));
+  const startOfSixMonths = new Date(Date.UTC(year, month - 5, 1));
 
   const [
     totals,
@@ -143,7 +152,7 @@ export async function DashboardSummary({
   const monthlyChartData = Array.from(
     { length: 6 },
     (_, index) => {
-      const date = new Date(year, month - 5 + index, 1);
+      const date = new Date(Date.UTC(year, month - 5 + index, 1));
 
       const monthTransactions = sixMonthsTransactions.filter(
         (transaction) =>

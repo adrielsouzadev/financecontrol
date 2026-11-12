@@ -67,13 +67,15 @@ export async function createTransaction(
       status: "success",
       message: "Transação cadastrada com sucesso!",
     };
-  } catch {
-    return {
-      status: "error",
-      message:
-        "Não foi possível cadastrar a transação. Tente novamente.",
-    };
-  }
+  } catch (error) {
+		console.error("Erro ao cadastrar transação:", error);
+
+		return {
+			status: "error",
+			message:
+				"Não foi possível cadastrar a transação. Tente novamente.",
+		};
+	}
 }
 
 export async function updateTransaction(
@@ -155,12 +157,14 @@ export async function updateTransaction(
       status: "success",
       message: "Transação atualizada com sucesso!",
     };
-  } catch {
-    return {
-      status: "error",
-      message: "Não foi possível atualizar a transação.",
-    };
-  }
+  } catch (error) {
+		console.error("Erro ao atualizar transação:", error);
+
+		return {
+			status: "error",
+			message: "Não foi possível atualizar a transação.",
+		};
+	}
 }
 
 export async function deleteTransaction(
@@ -197,10 +201,12 @@ export async function deleteTransaction(
       status: "success",
       message: "Transação excluída com sucesso!",
     };
-  } catch {
-    return {
-      status: "error",
-      message: "Não foi possível excluir a transação.",
-    };
-  }
+  } catch (error) {
+		console.error("Erro ao excluir transação:", error);
+
+		return {
+			status: "error",
+			message: "Não foi possível excluir a transação.",
+		};
+	}
 }
