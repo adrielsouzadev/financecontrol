@@ -1,9 +1,9 @@
-
 import { prisma } from "@/lib/prisma";
 import { connection } from "next/server";
 import { SummaryCard } from "@/components/dashboard/summary-card";
 import { MonthlyComparisonChart } from "@/components/dashboard/charts/monthly-comparison-chart";
 import { CategoryExpensesChart } from "@/components/dashboard/charts/category-expenses-chart";
+import { RecentTransactions } from "@/components/dashboard/recent-transactions";
 
 import {
   ArrowDownCircle,
@@ -44,6 +44,7 @@ export async function DashboardSummary({
     monthlyTotals,
     sixMonthsTransactions,
     categoryExpenses,
+    recentTransactions,
   ] = await Promise.all([
     prisma.transaction.groupBy({
       by: ["type"],
@@ -93,6 +94,30 @@ export async function DashboardSummary({
       },
       _sum: {
         amount: true,
+      },
+    }),
+
+    prisma.transaction.findMany({
+      take: 5,
+      orderBy: [
+        {
+          date: "desc",
+        },
+        {
+          createdAt: "desc",
+        },
+      ],
+      select: {
+        id: true,
+        description: true,
+        amount: true,
+        type: true,
+        date: true,
+        category: {
+          select: {
+            name: true,
+          },
+        },
       },
     }),
   ]);
@@ -166,6 +191,11 @@ export async function DashboardSummary({
     amount: Number(item._sum.amount ?? 0),
   }));
 
+  const recentTransactionsData = recentTransactions.map((transaction) => ({
+    ...transaction,
+    amount: Number(transaction.amount),
+  }));
+
   return (
     <div className="space-y-6">
       <section className="grid gap-4 md:grid-cols-3">
@@ -196,6 +226,8 @@ export async function DashboardSummary({
       <MonthlyComparisonChart data={monthlyChartData} />
 
       <CategoryExpensesChart data={categoryChartData} />
+
+      <RecentTransactions transactions={recentTransactionsData} />
     </div>
   );
 }
