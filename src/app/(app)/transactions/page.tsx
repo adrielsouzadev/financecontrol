@@ -1,24 +1,52 @@
+
 import { Suspense } from "react";
 import { connection } from "next/server";
+import { prisma } from "@/lib/prisma";
 import { PageHeader } from "@/components/layout/page-header";
 import { TransactionForm } from "@/components/transactions/transaction-form";
-import { prisma } from "@/lib/prisma";
+import { TransactionList } from "@/components/transactions/transaction-list";
 
 async function TransactionsContent() {
   await connection();
 
-  const categories = await prisma.category.findMany({
-    select: {
-      id: true,
-      name: true,
-      type: true,
-    },
-    orderBy: {
-      name: "asc",
-    },
-  });
+  const [categories, transactions] = await Promise.all([
+    prisma.category.findMany({
+      select: {
+        id: true,
+        name: true,
+        type: true,
+      },
+      orderBy: {
+        name: "asc",
+      },
+    }),
 
-  return <TransactionForm categories={categories} />;
+    prisma.transaction.findMany({
+      include: {
+        category: {
+          select: {
+            name: true,
+          },
+        },
+      },
+      orderBy: {
+        date: "desc",
+      },
+    }),
+  ]);
+
+  return (
+    <>
+      <TransactionForm categories={categories} />
+
+      <TransactionList
+        transactions={transactions.map((transaction) => ({
+          ...transaction,
+          amount: Number(transaction.amount),
+        }))}
+      />
+    </>
+  );
 }
 
 export default function TransactionsPage() {
@@ -33,7 +61,7 @@ export default function TransactionsPage() {
         <Suspense
           fallback={
             <div className="rounded-xl border border-border bg-white p-6 text-sm text-muted">
-              Carregando formulário...
+              Carregando transações...
             </div>
           }
         >
