@@ -76,6 +76,93 @@ export async function createTransaction(
   }
 }
 
+export async function updateTransaction(
+  _previousState: TransactionFormState,
+  formData: FormData
+): Promise<TransactionFormState> {
+  const id = String(formData.get("id") ?? "");
+
+  if (!id.trim()) {
+    return {
+      status: "error",
+      message: "Transação inválida.",
+    };
+  }
+
+  const result = transactionSchema.safeParse(
+    Object.fromEntries(formData.entries())
+  );
+
+  if (!result.success) {
+    const errors: Record<string, string[]> = {};
+
+    for (const issue of result.error.issues) {
+      const field = String(issue.path[0] ?? "form");
+      errors[field] ??= [];
+      errors[field].push(issue.message);
+    }
+
+    return {
+      status: "error",
+      message: "Verifique os campos informados.",
+      errors,
+    };
+  }
+
+  const data = result.data;
+
+  try {
+    const transaction = await prisma.transaction.findUnique({
+      where: { id },
+      select: { id: true },
+    });
+
+    if (!transaction) {
+      return {
+        status: "error",
+        message: "Transação não encontrada.",
+      };
+    }
+
+    const category = await prisma.category.findUnique({
+      where: { id: data.categoryId },
+      select: { type: true },
+    });
+
+    if (!category || category.type !== data.type) {
+      return {
+        status: "error",
+        message:
+          "A categoria selecionada não corresponde ao tipo da transação.",
+      };
+    }
+
+    await prisma.transaction.update({
+      where: { id },
+      data: {
+        description: data.description,
+        amount: data.amount,
+        type: data.type,
+        date: new Date(`${data.date}T12:00:00.000Z`),
+        categoryId: data.categoryId,
+      },
+    });
+
+    revalidatePath("/");
+    revalidatePath("/transactions");
+
+    return {
+      status: "success",
+      message: "Transação atualizada com sucesso!",
+    };
+  } catch {
+    return {
+      status: "error",
+      message: "Não foi possível atualizar a transação.",
+    };
+  }
+}
+
 export async function deleteTransaction(
   id: string
 ): Promise<TransactionFormState> {

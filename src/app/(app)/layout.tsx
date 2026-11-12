@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { Suspense, type ReactNode } from "react";
 import { Sidebar } from "@/components/layout/sidebar";
 
 type AppLayoutProps = {
@@ -10,7 +10,9 @@ export default function AppLayout({
 }: AppLayoutProps) {
   return (
     <div className="flex min-h-screen flex-col bg-background lg:flex-row">
-      <Sidebar />
+      <Suspense fallback={<div className="w-64 shrink-0" />}>
+        <Sidebar />
+      </Suspense>
 
       <main className="min-w-0 flex-1">
         {children}

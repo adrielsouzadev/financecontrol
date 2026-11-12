@@ -3,6 +3,7 @@
 import { useActionState, useState } from "react";
 import {
   createTransaction,
+  updateTransaction,
   type TransactionFormState,
 } from "@/app/actions/transactions";
 
@@ -14,8 +15,18 @@ type CategoryOption = {
   type: TransactionType;
 };
 
+type TransactionFormData = {
+  id: string;
+  description: string;
+  amount: number;
+  type: TransactionType;
+  date: string;
+  categoryId: string;
+};
+
 type TransactionFormProps = {
   categories: CategoryOption[];
+  transaction?: TransactionFormData;
 };
 
 const initialState: TransactionFormState = {
@@ -25,11 +36,16 @@ const initialState: TransactionFormState = {
 
 export function TransactionForm({
   categories,
+  transaction,
 }: TransactionFormProps) {
-  const [type, setType] = useState<TransactionType>("EXPENSE");
+  const [type, setType] = useState<TransactionType>(
+    transaction?.type ?? "EXPENSE"
+  );
+
+  const action = transaction ? updateTransaction :  createTransaction;
 
   const [state, formAction, isPending] = useActionState(
-    createTransaction,
+    action,
     initialState
   );
 
@@ -41,7 +57,7 @@ export function TransactionForm({
     <section className="rounded-xl border border-border bg-white p-6 shadow-sm">
       <div className="mb-6">
         <h2 className="text-lg font-semibold">
-          Nova transação
+          {transaction ? "Editar transação" : "Nova transação"}
         </h2>
 
         <p className="mt-1 text-sm text-muted">
@@ -50,6 +66,10 @@ export function TransactionForm({
       </div>
 
       <form action={formAction} className="space-y-5">
+        {transaction && (
+          <input type="hidden" name="id" value={transaction.id} />
+        )}
+
         <div className="grid gap-5 sm:grid-cols-2">
           <div>
             <label
@@ -92,6 +112,7 @@ export function TransactionForm({
               name="description"
               type="text"
               maxLength={120}
+              defaultValue={transaction?.description ?? ""}
               placeholder={
                 type === "EXPENSE"
                   ? "Ex.: Conta de energia"
@@ -121,6 +142,7 @@ export function TransactionForm({
               type="number"
               min="0.01"
               step="0.01"
+              defaultValue={transaction?.amount ?? ""}
               placeholder="0,00"
               className="w-full rounded-lg border border-border px-3 py-3 text-sm outline-none focus:border-primary"
             />
@@ -144,7 +166,10 @@ export function TransactionForm({
               id="date"
               name="date"
               type="date"
-              defaultValue={new Date().toLocaleDateString("en-CA")}
+              defaultValue={
+                transaction?.date ??
+                new Date().toLocaleDateString("en-CA")
+              }
               className="w-full rounded-lg border border-border px-3 py-3 text-sm outline-none focus:border-primary"
             />
 
@@ -168,7 +193,7 @@ export function TransactionForm({
               id="categoryId"
               name="categoryId"
               required
-              defaultValue=""
+              defaultValue={transaction?.categoryId ?? ""}
               className="w-full rounded-lg border border-border bg-white px-3 py-3 text-sm outline-none focus:border-primary"
             >
               <option value="" disabled>
@@ -208,7 +233,11 @@ export function TransactionForm({
           disabled={isPending}
           className="rounded-lg bg-primary px-5 py-3 text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {isPending ? "Salvando..." : "Cadastrar transação"}
+          {isPending
+            ? "Salvando..."
+            : transaction
+              ? "Salvar alterações"
+              : "Cadastrar transação"}
         </button>
       </form>
     </section>

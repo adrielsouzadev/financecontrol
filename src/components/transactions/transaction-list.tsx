@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { deleteTransaction } from "@/app/actions/transactions";
 import type { TransactionType } from "@/generated/prisma/client";
 
@@ -134,14 +135,23 @@ export function TransactionList({
                 </td>
 
                 <td className="px-3 py-4 text-center">
-                  <button
-                    type="button"
-                    onClick={() => setTransactionToDelete(transaction.id)}
-                    className="rounded-lg px-3 py-2 text-xs font-medium text-red-600 transition-colors hover:bg-red-50"
-                  >
-                    Excluir
-                  </button>
-                </td>
+									<div className="flex items-center justify-center gap-2">
+										<Link
+											href={`/transactions/${transaction.id}/edit`}
+											className="rounded-lg px-3 py-2 text-xs font-medium text-blue-600 transition-colors hover:bg-blue-50"
+										>
+											Editar
+										</Link>
+
+										<button
+											type="button"
+											onClick={() => setTransactionToDelete(transaction.id)}
+											className="rounded-lg px-3 py-2 text-xs font-medium text-red-600 transition-colors hover:bg-red-50"
+										>
+											Excluir
+										</button>
+									</div>
+								</td>
               </tr>
             ))}
           </tbody>
