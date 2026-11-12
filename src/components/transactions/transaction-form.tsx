@@ -1,7 +1,10 @@
-
 "use client";
 
-import { useState } from "react";
+import { useActionState, useState } from "react";
+import {
+  createTransaction,
+  type TransactionFormState,
+} from "@/app/actions/transactions";
 
 type TransactionType = "INCOME" | "EXPENSE";
 
@@ -15,10 +18,20 @@ type TransactionFormProps = {
   categories: CategoryOption[];
 };
 
+const initialState: TransactionFormState = {
+  status: "idle",
+  message: "",
+};
+
 export function TransactionForm({
   categories,
 }: TransactionFormProps) {
   const [type, setType] = useState<TransactionType>("EXPENSE");
+
+  const [state, formAction, isPending] = useActionState(
+    createTransaction,
+    initialState
+  );
 
   const filteredCategories = categories.filter(
     (category) => category.type === type
@@ -36,7 +49,7 @@ export function TransactionForm({
         </p>
       </div>
 
-      <form className="space-y-5">
+      <form action={formAction} className="space-y-5">
         <div className="grid gap-5 sm:grid-cols-2">
           <div>
             <label
@@ -48,6 +61,7 @@ export function TransactionForm({
 
             <select
               id="type"
+              name="type"
               value={type}
               onChange={(event) =>
                 setType(event.target.value as TransactionType)
@@ -57,6 +71,12 @@ export function TransactionForm({
               <option value="EXPENSE">Despesa</option>
               <option value="INCOME">Receita</option>
             </select>
+
+            {state.errors?.type && (
+              <p className="mt-1 text-sm text-red-600">
+                {state.errors.type[0]}
+              </p>
+            )}
           </div>
 
           <div>
@@ -72,9 +92,19 @@ export function TransactionForm({
               name="description"
               type="text"
               maxLength={120}
-              placeholder="Ex.: Conta de energia"
+              placeholder={
+                type === "EXPENSE"
+                  ? "Ex.: Conta de energia"
+                  : "Ex.: Salário"
+              }
               className="w-full rounded-lg border border-border px-3 py-3 text-sm outline-none focus:border-primary"
             />
+
+            {state.errors?.description && (
+              <p className="mt-1 text-sm text-red-600">
+                {state.errors.description[0]}
+              </p>
+            )}
           </div>
 
           <div>
@@ -94,6 +124,12 @@ export function TransactionForm({
               placeholder="0,00"
               className="w-full rounded-lg border border-border px-3 py-3 text-sm outline-none focus:border-primary"
             />
+
+            {state.errors?.amount && (
+              <p className="mt-1 text-sm text-red-600">
+                {state.errors.amount[0]}
+              </p>
+            )}
           </div>
 
           <div>
@@ -111,6 +147,12 @@ export function TransactionForm({
               defaultValue={new Date().toLocaleDateString("en-CA")}
               className="w-full rounded-lg border border-border px-3 py-3 text-sm outline-none focus:border-primary"
             />
+
+            {state.errors?.date && (
+              <p className="mt-1 text-sm text-red-600">
+                {state.errors.date[0]}
+              </p>
+            )}
           </div>
 
           <div className="sm:col-span-2">
@@ -122,6 +164,7 @@ export function TransactionForm({
             </label>
 
             <select
+              key={type}
               id="categoryId"
               name="categoryId"
               required
@@ -138,8 +181,35 @@ export function TransactionForm({
                 </option>
               ))}
             </select>
+
+            {state.errors?.categoryId && (
+              <p className="mt-1 text-sm text-red-600">
+                {state.errors.categoryId[0]}
+              </p>
+            )}
           </div>
         </div>
+
+        {state.message && (
+          <p
+            role="status"
+            className={`text-sm ${
+              state.status === "success"
+                ? "text-green-600"
+                : "text-red-600"
+            }`}
+          >
+            {state.message}
+          </p>
+        )}
+
+        <button
+          type="submit"
+          disabled={isPending}
+          className="rounded-lg bg-primary px-5 py-3 text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {isPending ? "Salvando..." : "Cadastrar transação"}
+        </button>
       </form>
     </section>
   );

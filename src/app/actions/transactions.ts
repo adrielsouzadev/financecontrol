@@ -1,0 +1,77 @@
+"use server";
+
+import { revalidatePath } from "next/cache";
+import { prisma } from "@/lib/prisma";
+import { transactionSchema } from "@/lib/validations/transaction";
+
+export type TransactionFormState = {
+  status: "idle" | "success" | "error";
+  message: string;
+  errors?: Record<string, string[]>;
+};
+
+export async function createTransaction(
+  _previousState: TransactionFormState,
+  formData: FormData
+): Promise<TransactionFormState> {
+  const result = transactionSchema.safeParse(
+    Object.fromEntries(formData.entries())
+  );
+
+  if (!result.success) {
+    const errors: Record<string, string[]> = {};
+
+    for (const issue of result.error.issues) {
+      const field = String(issue.path[0] ?? "form");
+      errors[field] ??= [];
+      errors[field].push(issue.message);
+    }
+
+    return {
+      status: "error",
+      message: "Verifique os campos informados.",
+      errors,
+    };
+  }
+
+  const data = result.data;
+
+  try {
+    const category = await prisma.category.findUnique({
+      where: { id: data.categoryId },
+      select: { type: true },
+    });
+
+    if (!category || category.type !== data.type) {
+      return {
+        status: "error",
+        message:
+          "A categoria selecionada não corresponde ao tipo da transação.",
+      };
+    }
+
+    await prisma.transaction.create({
+      data: {
+        description: data.description,
+        amount: data.amount,
+        type: data.type,
+        date: new Date(`${data.date}T12:00:00.000Z`),
+        categoryId: data.categoryId,
+      },
+    });
+
+    revalidatePath("/");
+    revalidatePath("/transactions");
+
+    return {
+      status: "success",
+      message: "Transação cadastrada com sucesso!",
+    };
+  } catch {
+    return {
+      status: "error",
+      message:
+        "Não foi possível cadastrar a transação. Tente novamente.",
+    };
+  }
+}
