@@ -168,7 +168,9 @@ export function TransactionForm({
               type="date"
               defaultValue={
                 transaction?.date ??
-                new Date().toLocaleDateString("en-CA")
+                new Date().toLocaleDateString("en-CA", {
+                  timeZone: "America/Sao_Paulo",
+                })
               }
               className="w-full rounded-lg border border-border px-3 py-3 text-sm outline-none focus:border-primary"
             />

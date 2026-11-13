@@ -35,14 +35,14 @@ export async function DashboardSummary({
     parsedMonth >= 1 &&
     parsedMonth <= 12
       ? parsedMonth
-      : currentDate.getMonth() + 1;
+      : currentDate.getUTCMonth() + 1;
 
   const year =
     Number.isInteger(parsedYear) &&
     parsedYear >= 1900 &&
     parsedYear <= 2100
       ? parsedYear
-      : currentDate.getFullYear();
+      : currentDate.getUTCFullYear();
 
   const startOfMonth = new Date(Date.UTC(year, month - 1, 1));
   const startOfNextMonth = new Date(Date.UTC(year, month, 1));
@@ -156,8 +156,8 @@ export async function DashboardSummary({
 
       const monthTransactions = sixMonthsTransactions.filter(
         (transaction) =>
-          transaction.date.getUTCMonth() === date.getMonth() &&
-          transaction.date.getUTCFullYear() === date.getFullYear()
+          transaction.date.getUTCMonth() === date.getUTCMonth() &&
+          transaction.date.getUTCFullYear() === date.getUTCFullYear()
       );
 
       const income = monthTransactions
@@ -177,6 +177,7 @@ export async function DashboardSummary({
       return {
         month: new Intl.DateTimeFormat("pt-BR", {
           month: "short",
+          timeZone: "UTC",
         })
           .format(date)
           .replace(".", ""),
