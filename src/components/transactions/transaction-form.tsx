@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import {
   createTransaction,
   updateTransaction,
@@ -42,12 +42,25 @@ export function TransactionForm({
     transaction?.type ?? "EXPENSE"
   );
 
-  const action = transaction ? updateTransaction :  createTransaction;
+  const action = transaction ? updateTransaction : createTransaction;
 
   const [state, formAction, isPending] = useActionState(
     action,
     initialState
   );
+
+  const [hiddenSuccessState, setHiddenSuccessState] =
+    useState<TransactionFormState | null>(null);
+
+  useEffect(() => {
+    if (state.status !== "success") return;
+
+    const timeoutId = window.setTimeout(() => {
+      setHiddenSuccessState(state);
+    }, 3000);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [state]);
 
   const filteredCategories = categories.filter(
     (category) => category.type === type
@@ -217,18 +230,19 @@ export function TransactionForm({
           </div>
         </div>
 
-        {state.message && (
-          <p
-            role="status"
-            className={`text-sm ${
-              state.status === "success"
-                ? "text-green-600"
-                : "text-red-600"
-            }`}
-          >
-            {state.message}
-          </p>
-        )}
+        {state.message &&
+          (state.status !== "success" || hiddenSuccessState !== state) && (
+            <p
+              role="status"
+              className={`text-sm ${
+                state.status === "success"
+                  ? "text-green-600"
+                  : "text-red-600"
+              }`}
+            >
+              {state.message}
+            </p>
+          )}
 
         <button
           type="submit"
