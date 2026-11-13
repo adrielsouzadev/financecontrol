@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { transactionSchema } from "@/lib/validations/transaction";
+import { redirect } from "next/navigation";
 
 export type TransactionFormState = {
   status: "idle" | "success" | "error";
@@ -152,11 +153,6 @@ export async function updateTransaction(
 
     revalidatePath("/");
     revalidatePath("/transactions");
-
-    return {
-      status: "success",
-      message: "Transação atualizada com sucesso!",
-    };
   } catch (error) {
 		console.error("Erro ao atualizar transação:", error);
 
@@ -165,6 +161,8 @@ export async function updateTransaction(
 			message: "Não foi possível atualizar a transação.",
 		};
 	}
+
+  redirect("/transactions");
 }
 
 export async function deleteTransaction(

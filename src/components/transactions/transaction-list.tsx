@@ -25,14 +25,22 @@ export function TransactionList({
 }: TransactionListProps) {
   const [transactionToDelete, setTransactionToDelete] = useState<string | null>(null);
   const [message, setMessage] = useState("");
+  const [isDeleting, setIsDeleting] = useState(false);
 
   async function handleDelete() {
-    if (!transactionToDelete) return;
+    if (!transactionToDelete || isDeleting) return;
 
-    const result = await deleteTransaction(transactionToDelete);
+    setIsDeleting(true);
 
-    setMessage(result.message);
-    setTransactionToDelete(null);
+    try {
+      const result = await deleteTransaction(transactionToDelete);
+      setMessage(result.message);
+    } catch {
+      setMessage("Não foi possível excluir a transação.");
+    } finally {
+      setTransactionToDelete(null);
+      setIsDeleting(false);
+    }
   }
 
   if (transactions.length === 0) {
@@ -179,20 +187,22 @@ export function TransactionList({
 
 					<div className="mt-6 flex justify-end gap-3">
 						<button
-							type="button"
-							onClick={() => setTransactionToDelete(null)}
-							className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100"
-						>
-							Cancelar
-						</button>
+              type="button"
+              onClick={() => setTransactionToDelete(null)}
+              disabled={isDeleting}
+              className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              Cancelar
+            </button>
 
 						<button
-							type="button"
-							onClick={handleDelete}
-							className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700"
-						>
-							Excluir
-						</button>
+              type="button"
+              onClick={handleDelete}
+              disabled={isDeleting}
+              className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {isDeleting ? "Excluindo..." : "Excluir"}
+            </button>
 					</div>
 				</div>
 			</div>
