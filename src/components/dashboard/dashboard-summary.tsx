@@ -2,7 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { connection } from "next/server";
 import { SummaryCard } from "@/components/dashboard/summary-card";
 import { MonthlyComparisonChart } from "@/components/dashboard/charts/monthly-comparison-chart";
-import { CategoryExpensesChart } from "@/components/dashboard/charts/category-expenses-chart";
+import { CategoryPieChart } from "@/components/dashboard/charts/category-pie-chart";
 import { RecentTransactions } from "@/components/dashboard/recent-transactions";
 
 import {
@@ -53,6 +53,7 @@ export async function DashboardSummary({
     monthlyTotals,
     sixMonthsTransactions,
     categoryExpenses,
+    categoryIncomes,
     recentTransactions,
   ] = await Promise.all([
     prisma.transaction.groupBy({
@@ -96,6 +97,20 @@ export async function DashboardSummary({
       by: ["categoryId"],
       where: {
         type: "EXPENSE",
+        date: {
+          gte: startOfMonth,
+          lt: startOfNextMonth,
+        },
+      },
+      _sum: {
+        amount: true,
+      },
+    }),
+
+    prisma.transaction.groupBy({
+      by: ["categoryId"],
+      where: {
+        type: "INCOME",
         date: {
           gte: startOfMonth,
           lt: startOfNextMonth,
@@ -194,12 +209,34 @@ export async function DashboardSummary({
     },
   });
 
-  const categoryChartData = categoryExpenses.map((item) => ({
-    category:
-      categories.find((category) => category.id === item.categoryId)
-        ?.name ?? "Outras despesas",
-    amount: Number(item._sum.amount ?? 0),
-  }));
+  const categoryNames = new Map<string, string>(
+    categories.map((category) => [category.id, category.name])
+  );
+
+  function toCategoryChartData(
+    items: {
+      categoryId: string;
+      _sum: { amount: unknown } | null;
+    }[],
+    fallbackName: string
+  ) {
+    return items
+      .map((item) => ({
+        category: categoryNames.get(item.categoryId) ?? fallbackName,
+        amount: Number(item._sum?.amount ?? 0),
+      }))
+      .sort((a, b) => b.amount - a.amount);
+  }
+
+  const expenseChartData = toCategoryChartData(
+    categoryExpenses,
+    "Outras despesas"
+  );
+
+  const incomeChartData = toCategoryChartData(
+    categoryIncomes,
+    "Outras receitas"
+  );
 
   const recentTransactionsData = recentTransactions.map((transaction) => ({
     ...transaction,
@@ -235,7 +272,21 @@ export async function DashboardSummary({
 
       <MonthlyComparisonChart data={monthlyChartData} />
 
-      <CategoryExpensesChart data={categoryChartData} />
+      <div className="grid gap-6 lg:grid-cols-2">
+        <CategoryPieChart
+          title="Despesas por categoria"
+          description="Distribuição dos gastos no período selecionado"
+          emptyMessage="Nenhuma despesa registrada neste período."
+          data={expenseChartData}
+        />
+
+        <CategoryPieChart
+          title="Receitas por categoria"
+          description="Distribuição dos ganhos no período selecionado"
+          emptyMessage="Nenhuma receita registrada neste período."
+          data={incomeChartData}
+        />
+      </div>
 
       <RecentTransactions transactions={recentTransactionsData} />
     </div>

@@ -1,22 +1,27 @@
 "use client";
 
 import {
-  Cell,
+  Legend,
   Pie,
   PieChart,
   ResponsiveContainer,
+  Sector,
   Tooltip,
+  type PieSectorShapeProps,
 } from "recharts";
 
 import { formatCurrency } from "@/lib/format-currency";
 
-type CategoryExpense = {
+type CategoryAmount = {
   category: string;
   amount: number;
 };
 
-type CategoryExpensesChartProps = {
-  data: CategoryExpense[];
+type CategoryPieChartProps = {
+  title: string;
+  description: string;
+  emptyMessage: string;
+  data: CategoryAmount[];
 };
 
 const COLORS = [
@@ -30,29 +35,37 @@ const COLORS = [
   "#64748b",
 ];
 
-export function CategoryExpensesChart({
+function CategorySector(props: PieSectorShapeProps) {
+  return (
+    <Sector
+      {...props}
+      fill={COLORS[props.index % COLORS.length]}
+      stroke="none"
+    />
+  );
+}
+
+export function CategoryPieChart({
+  title,
+  description,
+  emptyMessage,
   data,
-}: CategoryExpensesChartProps) {
+}: CategoryPieChartProps) {
   return (
     <section className="rounded-xl border border-border bg-white p-6 shadow-sm">
       <div className="mb-6">
-        <h2 className="text-lg font-semibold">
-          Despesas por categoria
-        </h2>
-
-        <p className="mt-1 text-sm text-muted">
-          Distribuição dos gastos no período selecionado
-        </p>
+        <h2 className="text-lg font-semibold">{title}</h2>
+        <p className="mt-1 text-sm text-muted">{description}</p>
       </div>
 
       {data.length === 0 ? (
         <div className="flex h-80 items-center justify-center text-sm text-muted">
-          Nenhuma despesa registrada neste período.
+          {emptyMessage}
         </div>
       ) : (
         <div className="h-80 w-full">
           <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
+            <PieChart accessibilityLayer={false}>
               <Pie
                 data={data}
                 dataKey="amount"
@@ -61,21 +74,15 @@ export function CategoryExpensesChart({
                 cy="50%"
                 innerRadius={75}
                 outerRadius={115}
-                paddingAngle={3}
-              >
-                {data.map((entry, index) => (
-                  <Cell
-                    key={entry.category}
-                    fill={COLORS[index % COLORS.length]}
-                  />
-                ))}
-              </Pie>
+                paddingAngle={0}
+                shape={CategorySector}
+              />
 
               <Tooltip
-                formatter={(value) =>
-                  formatCurrency(Number(value))
-                }
+                formatter={(value) => formatCurrency(Number(value))}
               />
+
+              <Legend />
             </PieChart>
           </ResponsiveContainer>
         </div>

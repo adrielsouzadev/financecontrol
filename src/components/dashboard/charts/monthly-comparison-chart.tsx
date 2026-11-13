@@ -41,6 +41,7 @@ export function MonthlyComparisonChart({
       <div className="h-80 w-full">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
+            accessibilityLayer={false}
             data={data}
             margin={{
               top: 10,
