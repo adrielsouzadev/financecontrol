@@ -1,12 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   ArrowLeftRight,
   LayoutDashboard,
-  Wallet,
   Menu,
   X,
 } from "lucide-react";
@@ -56,12 +56,16 @@ export function Sidebar() {
     <>
       {/* Sidebar para computadores */}
       <aside className="hidden min-h-screen w-64 shrink-0 flex-col border-r border-border bg-white lg:flex">
-        <div className="flex h-20 items-center gap-3 border-b border-border px-6">
-          <div className="flex size-10 items-center justify-center rounded-xl bg-primary text-white">
-            <Wallet className="size-6" />
-          </div>
+        <div className="flex h-20 items-center gap-1 border-b border-border px-6">
+          <Image
+            src="/logo.png"
+            alt="logo"
+            width={28}
+            height={28}
+            className="size-7 -translate-y-px object-contain"
+          />
 
-          <span className="text-xl font-bold tracking-tight">
+          <span className="text-[22px] font-bold leading-none tracking-tight">
             FinanceControl
           </span>
         </div>
@@ -84,12 +88,16 @@ export function Sidebar() {
       {/* Navegação para dispositivos móveis */}
       <div className="lg:hidden">
         <header className="flex h-16 items-center justify-between border-b border-border bg-white px-5">
-          <div className="flex min-w-0 items-center gap-2">
-            <div className="flex size-9 items-center justify-center rounded-lg bg-primary text-white">
-              <Wallet className="size-5" />
-            </div>
+          <div className="flex min-w-0 items-center gap-1">
+            <Image
+              src="/logo.png"
+              alt="logo"
+              width={24}
+              height={24}
+              className="size-6 -translate-y-px object-contain"
+            />
 
-            <span className="whitespace-nowrap text-sm font-bold tracking-tight sm:text-base">
+            <span className="whitespace-nowrap text-xl font-bold leading-none tracking-tight">
               FinanceControl
             </span>
           </div>

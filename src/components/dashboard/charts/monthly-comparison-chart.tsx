@@ -87,6 +87,7 @@ export function MonthlyComparisonChart({
               name="Receitas"
               fill="#16a34a"
               radius={[4, 4, 0, 0]}
+              isAnimationActive={false}
             />
 
             <Bar
@@ -94,6 +95,7 @@ export function MonthlyComparisonChart({
               name="Despesas"
               fill="#ef4444"
               radius={[4, 4, 0, 0]}
+              isAnimationActive={false}
             />
           </BarChart>
         </ResponsiveContainer>
