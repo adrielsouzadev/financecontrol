@@ -24,7 +24,7 @@ Aplicação web de controle financeiro pessoal, desenvolvida com Next.js e TypeS
 
 ![Dashboard do FinanceControl](screenshots/dashboard.png)
 
-## Dashboard Gráficos
+### Dashboard Gráficos
 
 ![Dashboard Gráficos](screenshots/dashboard-graficos.png)
 
