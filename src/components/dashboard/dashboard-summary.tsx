@@ -46,7 +46,7 @@ export async function DashboardSummary({
 
   const startOfMonth = new Date(Date.UTC(year, month - 1, 1));
   const startOfNextMonth = new Date(Date.UTC(year, month, 1));
-  const startOfSixMonths = new Date(Date.UTC(year, month - 5, 1));
+  const startOfSixMonths = new Date(Date.UTC(year, month - 6, 1));
 
   const [
     totals,
@@ -167,7 +167,7 @@ export async function DashboardSummary({
   const monthlyChartData = Array.from(
     { length: 6 },
     (_, index) => {
-      const date = new Date(Date.UTC(year, month - 5 + index, 1));
+      const date = new Date(Date.UTC(year, month - 6 + index, 1));
 
       const monthTransactions = sixMonthsTransactions.filter(
         (transaction) =>
